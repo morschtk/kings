@@ -1,20 +1,38 @@
-const express = require('express');
-const path = require('path');
+const app = require('express')();
+var cors = require('cors');
+app.use(cors());
+const http = require('http').createServer(app);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: 'http://localhost:4200',
+  }
+});
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
 
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const players = [];
 
-const views_dir = path.join(__dirname, 'views');
-const img_dir = path.join(__dirname, 'images');
-app.use(express.static(views_dir));
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.static(img_dir));
+app.get('/', (req, res) => {
+  res.send('<h1>Hey Socket.io</h1>');
+});
 
-// Stupid browsers and stupid favicon requirments
-app.get('/favicon.ico', (req, res) => res.status(204));
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
+});
 
-app.get('/', (req, res) => res.redirect('/login'));
-app.get('/login', (req, res) => res.sendFile(path.join(views_dir, 'login.html')));
+app.get('/api/', (req, res) => {
+  console.log('here you go');
+  res.json(players);
+});
 
-app.listen(4200, () => console.log('Listening on port 4200!'));
+app.post('/api/add-to-game', (req, res) => {
+  console.log('added!');
+  const user = req.body.user;
+  players.push(user);
+  res.json(`${user} added`);
+});
+
+http.listen(3000, () => console.log('Listening on port 3000!'));
