@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 const { shuffle } = require('./utils/helpers');
 // import { shuffle } from './utils/helpers';
 
-let currPlayer = 0;
+let currPlayerIndex = 0;
 const players = [];
 const cards = [{
   url: '',
@@ -45,8 +45,10 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
+  socket.join('some room');
   let user = socket.handshake.query.user;
   console.log(`a user connected ${user}`);
+  console.log(`${players.join(', ')}`);
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
@@ -54,8 +56,26 @@ io.on('connection', (socket) => {
   // On Draw we grab the next card and send it back to the FE
   socket.on('draw', (msg) => {
     const currentCard = shuffledCards.pop();
-    socket.emit('currentCard', currentCard);
+    io.in('some room').emit('currentCard', currentCard);
   });
+
+  socket.on('endTurn', () => {
+    currPlayerIndex = currPlayerIndex < players.length ? currPlayerIndex++ : 0;
+    io.in('some room').emit('nextPlayerTurn', {
+      name: players[currPlayerIndex],
+      index: currPlayerIndex
+    });
+  });
+
+  socket.on('addPlayer', (name) => {
+    if (!players.find(kid => kid === name)) {
+      players.push(name);
+    }
+    io.in('some room').emit('playerAdded', {
+      currentPlayer: players[currPlayerIndex],
+      players
+    });
+  })
 });
 
 app.get('/api/', (req, res) => {
@@ -63,13 +83,16 @@ app.get('/api/', (req, res) => {
   res.json(players);
 });
 
-app.post('/api/add-to-game', (req, res) => {
-  console.log('added!');
-  const user = req.body.user;
-  players.push(user);
-  res.json({
-    index: players.length
-  });
-});
+// app.post('/api/add-to-game', (req, res) => {
+//   console.log('added!');
+//   const user = {
+//     name: req.body.user,
+//     index: players.length
+//   };
+//   if (!players.find(kid => kid === user.name)) {
+//     players.push(user.name);
+//   }
+//   res.json(user);
+// });
 
 http.listen(3000, () => console.log('Listening on port 3000!'));
