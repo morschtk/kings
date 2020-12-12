@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
   socket.join('some room');
   let user = socket.handshake.query.user;
   console.log(`a user connected ${user}`);
-  console.log(`${players.join(', ')}`);
   socket.on('disconnect', () => {
     console.log('user disconnected');
   });
@@ -60,11 +59,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('endTurn', () => {
-    currPlayerIndex = currPlayerIndex < players.length ? currPlayerIndex++ : 0;
-    io.in('some room').emit('nextPlayerTurn', {
-      name: players[currPlayerIndex],
-      index: currPlayerIndex
-    });
+    currPlayerIndex = currPlayerIndex < players.length-1 ? (currPlayerIndex + 1) : 0;
+    io.in('some room').emit('nextPlayerTurn', players[currPlayerIndex]);
   });
 
   socket.on('addPlayer', (name) => {
@@ -82,17 +78,5 @@ app.get('/api/', (req, res) => {
   console.log('here you go');
   res.json(players);
 });
-
-// app.post('/api/add-to-game', (req, res) => {
-//   console.log('added!');
-//   const user = {
-//     name: req.body.user,
-//     index: players.length
-//   };
-//   if (!players.find(kid => kid === user.name)) {
-//     players.push(user.name);
-//   }
-//   res.json(user);
-// });
 
 http.listen(3000, () => console.log('Listening on port 3000!'));
