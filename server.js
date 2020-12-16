@@ -11,7 +11,6 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
 const { shuffle } = require('./utils/helpers');
-// import { shuffle } from './utils/helpers';
 
 let currPlayerIndex = 0;
 const players = [];
@@ -39,13 +38,34 @@ const cards = [{
 }];
 
 const shuffledCards = shuffle(cards);
+// const shuffledCards = [{
+//   url: '',
+//   number: 2
+// },{
+//   url: '',
+//   number: 3
+// },{
+//   url: '',
+//   number: 2
+// },{
+//   url: '',
+//   number: 3
+// },{
+//   url: '',
+//   number: 2
+// },{
+//   url: '',
+//   number: 3
+// },{
+//   url: '',
+//   number: 2
+// }];
 
 app.get('/', (req, res) => {
   res.send('<h1>Hey Socket.io</h1>');
 });
 
 io.on('connection', (socket) => {
-  socket.join('some room');
   let user = socket.handshake.query.user;
   console.log(`a user connected ${user}`);
   socket.on('disconnect', () => {
@@ -63,7 +83,12 @@ io.on('connection', (socket) => {
     io.in('some room').emit('nextPlayerTurn', players[currPlayerIndex]);
   });
 
+  socket.on('choosePlayerBE', (name) => {
+    io.in('some room').emit('choosePlayer', name);
+  });
+
   socket.on('addPlayer', (name) => {
+    socket.join('some room');
     if (!players.find(kid => kid === name)) {
       players.push(name);
     }
