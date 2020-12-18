@@ -83,14 +83,14 @@ io.on('connection', (socket) => {
     io.in('some room').emit('nextPlayerTurn', players[currPlayerIndex]);
   });
 
-  socket.on('choosePlayerBE', (name) => {
-    io.in('some room').emit('choosePlayer', name);
+  socket.on('choosePlayerBE', (player) => {
+    io.in('some room').emit('choosePlayer', player);
   });
 
   socket.on('addPlayer', (name) => {
     socket.join('some room');
-    if (!players.find(kid => kid === name)) {
-      players.push(name);
+    if (!players.find(kid => kid.name === name)) {
+      players.push({ name });
     }
     io.in('some room').emit('playerAdded', {
       currentPlayer: players[currPlayerIndex],
