@@ -37,29 +37,29 @@ const cards = [{
   number: 7
 }];
 
-const shuffledCards = shuffle(cards);
-// const shuffledCards = [{
-//   url: '',
-//   number: 2
-// },{
-//   url: '',
-//   number: 3
-// },{
-//   url: '',
-//   number: 2
-// },{
-//   url: '',
-//   number: 3
-// },{
-//   url: '',
-//   number: 2
-// },{
-//   url: '',
-//   number: 3
-// },{
-//   url: '',
-//   number: 2
-// }];
+// const shuffledCards = shuffle(cards);
+const shuffledCards = [{
+  url: '',
+  number: 7
+},{
+  url: '',
+  number: 3
+},{
+  url: '',
+  number: 7
+},{
+  url: '',
+  number: 3
+},{
+  url: '',
+  number: 7
+},{
+  url: '',
+  number: 3
+},{
+  url: '',
+  number: 7
+}];
 
 app.get('/', (req, res) => {
   res.send('<h1>Hey Socket.io</h1>');
@@ -79,12 +79,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('endTurn', () => {
+    players.forEach(play => play.isGood = false);
     currPlayerIndex = currPlayerIndex < players.length-1 ? (currPlayerIndex + 1) : 0;
     io.in('some room').emit('nextPlayerTurn', players[currPlayerIndex]);
   });
 
   socket.on('choosePlayerBE', (player) => {
     io.in('some room').emit('choosePlayer', player);
+  });
+
+  socket.on('clickedSeven', (name) => {
+    // Update player in players
+    const newPlayers = players.map(player => {
+      if (player.name == name) {
+        player.isGood = true;
+      }
+      return player;
+    });
+      
+    io.in('some room').emit('updatePlayers', players);
   });
 
   socket.on('addPlayer', (name) => {
