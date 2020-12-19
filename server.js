@@ -13,6 +13,7 @@ app.use(bodyParser.json());
 const { shuffle } = require('./utils/helpers');
 
 let currPlayerIndex = 0;
+let counter = 0;
 const players = [];
 const cards = [{
   url: '',
@@ -79,6 +80,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('endTurn', () => {
+    counter = 0;
     players.forEach(play => play.isGood = false);
     currPlayerIndex = currPlayerIndex < players.length-1 ? (currPlayerIndex + 1) : 0;
     io.in('some room').emit('nextPlayerTurn', players[currPlayerIndex]);
@@ -89,15 +91,26 @@ io.on('connection', (socket) => {
   });
 
   socket.on('clickedSeven', (name) => {
-    // Update player in players
-    const newPlayers = players.map(player => {
-      if (player.name == name) {
+    if (counter == players.length-1) {
+      return;
+    }
+
+    players.find(player => {
+      // Only update player and counter if player hasn't hit 7 yet
+      if (player.name == name && !player.isGood) {
+        counter++;
         player.isGood = true;
+        return player;
       }
-      return player;
     });
+    
+    console.log(counter);
+    if (counter == players.length-1) {
+      io.in('some room').emit('cardSevenFinish', players);
+    } else {
+      io.in('some room').emit('updatePlayers', players);
+    }
       
-    io.in('some room').emit('updatePlayers', players);
   });
 
   socket.on('addPlayer', (name) => {
